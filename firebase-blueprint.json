@@ -1,0 +1,169 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and cross-device Gmail synchronization metadata",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the user"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 254,
+          "description": "Verified Google / Gmail address"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 100,
+          "description": "Athlete display name"
+        },
+        "photoURL": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 1024,
+          "description": "Google account profile photo URL"
+        },
+        "deletedActivityIds": {
+          "type": "array",
+          "description": "Bounded list (max 200) of deleted activity IDs for cross-device deletion sync"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of initial profile creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest cloud synchronization"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "displayName",
+        "photoURL",
+        "deletedActivityIds",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ActivityRecord": {
+      "title": "ActivityRecord",
+      "description": "Recorded cycling or running GPS activity with route coordinates, kilometer splits, and telemetry metrics",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Unique activity identifier"
+        },
+        "userId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner Firebase Auth UID"
+        },
+        "sportType": {
+          "type": "string",
+          "enum": ["cycling", "running"],
+          "minLength": 7,
+          "maxLength": 16,
+          "description": "Sport mode: cycling or running"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Activity title"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 2000,
+          "description": "Athlete activity notes"
+        },
+        "startTime": {
+          "type": "number",
+          "description": "Activity start epoch timestamp in milliseconds"
+        },
+        "endTime": {
+          "type": "number",
+          "description": "Activity end epoch timestamp in milliseconds"
+        },
+        "clientUpdatedAt": {
+          "type": "number",
+          "description": "Client modification epoch timestamp in milliseconds"
+        },
+        "stats": {
+          "type": "object",
+          "description": "Sanitized real-time and summary telemetry metrics"
+        },
+        "points": {
+          "type": "array",
+          "description": "Bounded array (max 1800) of GPS route coordinates and telemetry points"
+        },
+        "splits": {
+          "type": "array",
+          "description": "Bounded array (max 500) of per-kilometer split metrics"
+        },
+        "gpsQuality": {
+          "type": "object",
+          "description": "GPS signal quality and completeness summary"
+        },
+        "interruptions": {
+          "type": "array",
+          "description": "Bounded array (max 100) of tracking interruption logs"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of initial cloud upload"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest cloud update"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "sportType",
+        "title",
+        "notes",
+        "startTime",
+        "endTime",
+        "clientUpdatedAt",
+        "stats",
+        "points",
+        "splits",
+        "gpsQuality",
+        "interruptions",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Stores verified Gmail user profile and cross-device synchronization metadata"
+    },
+    "/users/{userId}/activities/{activityId}": {
+      "schema": "ActivityRecord",
+      "description": "Stores synchronized cycling and running GPS activities for the authenticated Gmail account"
+    }
+  }
+}

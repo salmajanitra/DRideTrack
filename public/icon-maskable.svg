@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGradMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0891b2" />
+      <stop offset="50%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    <filter id="shadowMask" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#042f2e" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <!-- Full-bleed background for maskable purpose -->
+  <rect width="512" height="512" fill="url(#bgGradMask)" />
+  
+  <!-- Subtle circular halo within safe zone -->
+  <circle cx="256" cy="256" r="175" fill="none" stroke="#ffffff" stroke-width="4" stroke-opacity="0.2" />
+
+  <!-- Road Bike Symbol inside safe zone (scaled 1.25) -->
+  <g transform="translate(108, 145) scale(1.25)" filter="url(#shadowMask)" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="45" cy="135" r="35" stroke-width="12" />
+    <circle cx="195" cy="135" r="35" stroke-width="12" />
+    <circle cx="108" cy="135" r="10" stroke-width="10" fill="#ffffff" />
+    <path d="M45 135 L108 135" />
+    <path d="M45 135 L88 65" />
+    <path d="M108 135 L88 65" />
+    <path d="M108 135 L160 65" />
+    <path d="M88 65 L160 65" />
+    <path d="M160 65 L195 135" />
+    <path d="M88 65 L84 50" />
+    <path d="M68 50 L100 50" stroke-width="16" />
+    <path d="M160 65 L165 44" />
+    <path d="M152 44 L175 44 C185 44 190 52 186 64 C182 72 174 72 170 72" stroke-width="12" />
+  </g>
+
+  <!-- GPS Signal Pulse at top right inside safe zone -->
+  <g transform="translate(330, 95)">
+    <circle cx="30" cy="30" r="10" fill="#ffffff" />
+    <path d="M12 12 A 25 25 0 0 1 48 12" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
+  </g>
+</svg>

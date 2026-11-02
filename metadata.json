@@ -1,0 +1,10 @@
+{
+  "name": "RideTrack GPS",
+  "description": "Professional GPS cycling tracker, real-time cycling computer HUD, elevation profiling, offline map caching, and post-ride activity highlights.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

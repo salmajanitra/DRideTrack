@@ -1,0 +1,260 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 4.1: Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global hardened primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && request.auth.token.email.size() >= 3
+        && request.auth.token.email.size() <= 254;
+    }
+
+    function isOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string
+        && id.size() >= 1
+        && id.size() <= 128
+        && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation Blueprint: UserProfile
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+          'id', 'email', 'displayName', 'photoURL',
+          'deletedActivityIds', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'email', 'displayName', 'photoURL',
+          'deletedActivityIds', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == userId
+        && data.id == request.auth.uid
+        && data.email is string
+        && data.email.size() >= 3
+        && data.email.size() <= 254
+        && data.email == request.auth.token.email
+        && data.displayName is string
+        && data.displayName.size() <= 100
+        && data.photoURL is string
+        && data.photoURL.size() <= 1024
+        && data.deletedActivityIds is list
+        && data.deletedActivityIds.size() <= 200
+        && (
+          data.deletedActivityIds.size() == 0
+          || (
+            data.deletedActivityIds[0] is string
+            && data.deletedActivityIds[0].size() >= 1
+            && data.deletedActivityIds[0].size() <= 128
+          )
+        )
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: ActivityRecord
+    function isValidActivityRecord(data, userId, activityId) {
+      return data.keys().hasAll([
+          'id', 'userId', 'sportType', 'title', 'notes',
+          'startTime', 'endTime', 'clientUpdatedAt',
+          'stats', 'points', 'splits', 'gpsQuality', 'interruptions',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'userId', 'sportType', 'title', 'notes',
+          'startTime', 'endTime', 'clientUpdatedAt',
+          'stats', 'points', 'splits', 'gpsQuality', 'interruptions',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == activityId
+        && isValidId(data.userId)
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && data.sportType is string
+        && data.sportType.size() >= 7
+        && data.sportType.size() <= 16
+        && (data.sportType == 'cycling' || data.sportType == 'running')
+        && data.title is string
+        && data.title.size() >= 1
+        && data.title.size() <= 200
+        && data.notes is string
+        && data.notes.size() <= 2000
+        && data.startTime is number
+        && data.startTime >= 0
+        && data.endTime is number
+        && data.endTime >= data.startTime
+        && data.clientUpdatedAt is number
+        && data.clientUpdatedAt >= 0
+        && data.stats is map
+        && data.stats.keys().size() >= 5
+        && data.stats.keys().size() <= 30
+        && data.stats.distanceKm is number
+        && data.stats.distanceKm >= 0
+        && data.stats.totalDurationSeconds is number
+        && data.stats.totalDurationSeconds >= 0
+        && data.points is list
+        && data.points.size() <= 1800
+        && (
+          data.points.size() == 0
+          || (
+            data.points[0] is map
+            && data.points[0].keys().size() <= 15
+            && data.points[0].lat is number
+            && data.points[0].lng is number
+          )
+        )
+        && data.splits is list
+        && data.splits.size() <= 500
+        && (
+          data.splits.size() == 0
+          || (
+            data.splits[0] is map
+            && data.splits[0].keys().size() <= 15
+            && data.splits[0].kmIndex is number
+          )
+        )
+        && data.gpsQuality is map
+        && data.gpsQuality.keys().size() >= 3
+        && data.gpsQuality.keys().size() <= 15
+        && data.interruptions is list
+        && data.interruptions.size() <= 100
+        && (
+          data.interruptions.size() == 0
+          || (
+            data.interruptions[0] is map
+            && data.interruptions[0].keys().size() <= 10
+          )
+        )
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Collection: /users/{userId}
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().id == existing().id
+        && incoming().updatedAt == request.time
+        && (
+          // Action 1: Standard profile & sync tombstone update
+          (
+            ('createdAt' in existing())
+            && existing().createdAt is timestamp
+            && incoming().createdAt == existing().createdAt
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'email', 'displayName', 'photoURL', 'deletedActivityIds', 'updatedAt'
+            ])
+          )
+          ||
+          // Action 2: One-time migration from legacy UserProfile document
+          (
+            (!('createdAt' in existing()) || !(existing().createdAt is timestamp))
+            && incoming().createdAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'email', 'displayName', 'photoURL', 'deletedActivityIds',
+              'createdAt', 'updatedAt', 'lastSyncAt'
+            ])
+          )
+        );
+
+      allow delete: if false;
+
+      // Subcollection: /users/{userId}/activities/{activityId}
+      match /activities/{activityId} {
+        allow get: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(activityId)
+          && existing().userId == request.auth.uid
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.id == request.auth.uid;
+
+        allow list: if isOwner(userId)
+          && isValidId(userId)
+          && resource.data.userId == request.auth.uid;
+
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(activityId)
+          && isValidActivityRecord(incoming(), userId, activityId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.id == request.auth.uid;
+
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(activityId)
+          && isValidActivityRecord(incoming(), userId, activityId)
+          && existing().userId == request.auth.uid
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && incoming().startTime == existing().startTime
+          && incoming().updatedAt == request.time
+          && (
+            // Action 1: Standard activity sync / notes / title update
+            (
+              ('createdAt' in existing())
+              && existing().createdAt is timestamp
+              && incoming().createdAt == existing().createdAt
+              && incoming().diff(existing()).affectedKeys().hasOnly([
+                'sportType', 'title', 'notes', 'endTime', 'clientUpdatedAt',
+                'stats', 'points', 'splits', 'gpsQuality', 'interruptions', 'updatedAt'
+              ])
+            )
+            ||
+            // Action 2: One-time migration of legacy activity record
+            (
+              (!('createdAt' in existing()) || !(existing().createdAt is timestamp))
+              && incoming().createdAt == request.time
+              && incoming().diff(existing()).affectedKeys().hasOnly([
+                'sportType', 'title', 'notes', 'endTime', 'clientUpdatedAt',
+                'stats', 'points', 'splits', 'gpsQuality', 'interruptions',
+                'createdAt', 'updatedAt'
+              ])
+            )
+          )
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.id == request.auth.uid;
+
+        allow delete: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(activityId)
+          && existing().userId == request.auth.uid
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.id == request.auth.uid;
+      }
+    }
+  }
+}

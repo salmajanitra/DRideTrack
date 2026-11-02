@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0891b2" />
+      <stop offset="50%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#042f2e" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <!-- Background with slight rounding for any-purpose icon -->
+  <rect width="512" height="512" rx="104" fill="url(#bgGrad)" />
+  
+  <!-- Outer subtle radar circles -->
+  <circle cx="256" cy="256" r="210" fill="none" stroke="#ffffff" stroke-width="4" stroke-opacity="0.15" stroke-dasharray="8 8" />
+  <circle cx="256" cy="256" r="170" fill="none" stroke="#ffffff" stroke-width="6" stroke-opacity="0.25" />
+
+  <!-- Road Bike Symbol (Professional geometric road bicycle with rider) -->
+  <g transform="translate(76, 116) scale(1.5)" filter="url(#shadow)" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Rear Wheel -->
+    <circle cx="45" cy="135" r="35" stroke-width="12" />
+    <!-- Front Wheel -->
+    <circle cx="195" cy="135" r="35" stroke-width="12" />
+    <!-- Crankset / Chainring center -->
+    <circle cx="108" cy="135" r="10" stroke-width="10" fill="#ffffff" />
+    <!-- Frame geometry: Chainstay -->
+    <path d="M45 135 L108 135" />
+    <!-- Seatstay -->
+    <path d="M45 135 L88 65" />
+    <!-- Seat tube -->
+    <path d="M108 135 L88 65" />
+    <!-- Down tube -->
+    <path d="M108 135 L160 65" />
+    <!-- Top tube -->
+    <path d="M88 65 L160 65" />
+    <!-- Fork -->
+    <path d="M160 65 L195 135" />
+    <!-- Seatpost & Saddle -->
+    <path d="M88 65 L84 50" />
+    <path d="M68 50 L100 50" stroke-width="16" />
+    <!-- Stem & Drop Handlebars -->
+    <path d="M160 65 L165 44" />
+    <path d="M152 44 L175 44 C185 44 190 52 186 64 C182 72 174 72 170 72" stroke-width="12" />
+  </g>
+
+  <!-- GPS Signal Pulse at top right -->
+  <g transform="translate(360, 60)">
+    <circle cx="40" cy="40" r="12" fill="#ffffff" />
+    <path d="M18 18 A 32 32 0 0 1 62 18" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" />
+    <path d="M4 4 A 52 52 0 0 1 76 4" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-opacity="0.8" />
+  </g>
+</svg>
